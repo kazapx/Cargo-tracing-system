@@ -1,0 +1,68 @@
+#
+#   Request-reply service in Python
+#   Connects REP socket to tcp://localhost:5560
+#   Expects "Hello" from client, replies with "World"
+#
+
+import zmq
+import csv
+import datetime as dt
+
+#input number you want to search
+
+
+
+#read csv, and split on "," the line
+
+
+
+project_date = "2018-10-02 17:06"
+old_date = ''
+old_bayrak = 0
+context = zmq.Context()
+socket = context.socket(zmq.REP)
+socket.connect("tcp://localhost:5560")
+#SAATI GERI AL OCTOBER-2-2018, 5-06-pm
+while True:
+    csv_file = csv.reader(open('allCars.csv', "r"), delimiter=",")
+    new_list = []
+    current_date=dt.datetime.now()
+    date = str(current_date)[0:16]
+    
+    if(old_bayrak == 0):
+        old_date = date
+        old_bayrak = 1
+        project_date_x = project_date
+    if(old_date != date):
+        old_date = date
+        new_list = list(project_date)
+
+        if(int(new_list[15]) == 9):
+            new_list[15] = str(0)
+            if(int(new_list[14]) == 5):
+               new_list[14] = str(0) 
+               
+            else:
+                new_list[14] = str(int(new_list[14]) + 1)
+        else:
+            new_list[15] = str(int(new_list[15]) + 1)
+        project_date_x = ''.join(new_list)
+
+    
+    print(project_date_x)
+    project_date = project_date_x    
+    #message is car id.
+    message = socket.recv()
+    latitude = ''
+    longitude = ''
+    id = str(message).replace('b','').replace('\'','')
+    print(f"Received request: {id}")
+    for row in csv_file:
+        if project_date_x in row and id in row :
+            print ('x:' + row[1] + ', y:' + row[2])
+            latitude = str(row[1])
+            longitude = str(row[2])
+            break
+    print(latitude +','+ longitude)        
+    socket.send_string(f"{latitude} {longitude}")
+    new_list = []
